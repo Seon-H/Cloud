@@ -1,0 +1,174 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <!--bootstrap추가 코드-->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+  <!--img 스타일 추가-->
+    <style>
+    img { width: 50px; height: auto; }
+    </style>
+</head>
+
+<body>
+<div class="container p-3 border text-center" ><!--박스안에 글자는 중앙 정렬-->
+<h4 id="clock"></h4><!--현재시간-->
+
+<div class ="container p-3 border ">
+  <div class ="container p-3 border bg-danger text-white"><!--박스 안의 백그라운드는 붉은색 글씨는 흰색-->
+  <img src ="Temperature.png"><!--이미지는 왼쪽정렬-->
+   <h2 id="temp" > </h2>
+
+ </div>
+ <div class ="container p-3 border bg-primary text-white"><!--박스 안의 백그라운드는 파란색 글씨는 흰색-->
+   <img src ="Humidity.png"><!--이미지는 왼쪽정렬-->
+   <h2 id="humi"> </h2>
+ </div>
+ </div>
+ <!--그래프가 들어갈 div-->
+    <div id="chartContainer" style="height: 400px; width: 100%;"></div>
+
+</div>
+    <!--Firebase JS SDK -->
+    <script src="https://www.gstatic.com/firebasejs/7.15.5/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.15.5/firebase-analytics.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.15.5/firebase-database.js"></script>
+
+    <!-- canvasJS 라이브러리(canavasjs.min.js)경로 -->
+    <script src="canvasjs.min.js"></script>
+
+    <script>
+        //Firebase configurations(구성) 추가
+        var firebaseConfig = {
+          apiKey: "AIzaSyAP5Q9Jqbo3a3SMcaKjsVbwXOauIrPvXlk",
+          authDomain: "hello-firebase-17515.firebaseapp.com",
+          databaseURL: "https://hello-firebase-17515.firebaseio.com",
+          projectId: "hello-firebase-17515",
+          storageBucket: "hello-firebase-17515.appspot.com",
+          messagingSenderId: "4802634887",
+          appId: "1:4802634887:web:ce689fdc076b39a0bc0422",
+          measurementId: "G-LN1KM172BR"
+        };
+        //초기화
+        firebase.initializeApp(firebaseConfig);
+
+        // CnavasJS.Chart 객체 생성 및 실행
+        var chart = new CanvasJS.Chart("chartContainer", {
+            animationEnabled: true,
+            title: {
+                text: "201934870 1반 유선희 Cloud Weather Monitor",
+                fontFamily: "Helvetica",
+                fontWeight: "bold",
+                fontColor: '#03254E',
+                fontSize: 22,
+            },
+            legend: {
+                fontSize: 15,
+                // verticalAlign: "top",  // legend를 top으로 이동함, 기본은 차트 bottom에 위치함
+            },
+            axisX: {//가로 아래 좌표
+                title: "Time",
+                suffix: "s",
+                titleFontSize: 14,
+                titleFontColor: '#03254E',
+                valueFormatString: 'HH:mm:ss',//시:분:초
+                labelFontColor: '#000000',
+            },
+            axisY: {//세로 왼쪽 좌표
+                title: "Temperature",
+                suffix: "°C",
+                valueFormatString: "0.0#",
+                minimum: 0,
+                maximum: 50,
+                titleFontColor: '#000000',
+                titleFontSize: 14,
+                labelFontColor: '#000000',
+            },
+            axisY2: {//세로 오른쪽 좌표
+                title: "Humidity",
+                suffix: "%",
+                valueFormatString: "0.0#",
+                minimum: 0,
+                maximum: 90,
+                titleFontColor: '#000000',
+                titleFontSize: 14,
+                labelFontColor: '#000000',
+            },
+            toolTip: {
+                shared: true,
+
+                // Custom toolTip 사용
+                contentFormatter: function(e) {
+                  //데이터 삽입
+                    var content = CanvasJS.formatDate(e.entries[0].dataPoint.x, "HH:mm:ss") + "<br>";
+                    content += "Humidity: " + e.entries[0].dataPoint.y + " &deg;C<br>";
+                    content += "Temperature: " + e.entries[1].dataPoint.y + " %";
+                    return content;
+                }
+            },
+            animationEnabled: true,
+            data: [{
+                type: "line", //change it to line, spline, area, column, pie,
+                name: "Humidity",
+                axisYType: "secondary",
+                showInLegend: true,
+                legendText: "Humidity",
+                markType: "circle",
+                markerSize: 1,
+                markerColor: "blue",
+                lineColor: "blue",
+                dataPoints: []   // Humidity 데이터 출력 값을 저장하는 배열
+            }, {
+              type: "line", //change it to line, spline, area, column, pie,
+              name: "Temperature",
+              axisY2Type: "secondary",
+              showInLegend: true,
+              legendText: "Temperature",
+              markType: "circle",
+              markerSize: 1,
+              markerColor: "red",
+              lineColor: "red",
+                dataPoints: []  // Temperature 데이터 출력 값을 저장하는 배열
+            }]
+        });
+
+        // DB에서 logDHT/ 값 얻어오기
+        var dbRef = firebase.database().ref('logDHT/');
+
+        dbRef.on('child_added', function(snapshot) {
+            var row = snapshot.val();
+            var newHumi = snapshot.val().humidity;//읽어온 습도값을 저장
+            var newTemp = snapshot.val().temperature;//읽어온 온도값을 저장
+          humi.innerText = "Humidity : " + newHumi + "%";//정해진 텍스트값에 습도값을 넣는다
+          temp.innerText = "Temperature : " + newTemp + "℃";//정해진 텍스트값에 온도값을 넣는다
+
+            // firebase DB로 부터 받은 날짜 문자열은 CanvasJS에서 사용하려면 반드시 Date 객체형으로 변환해야 함
+            row.time = new Date(row.time);
+            chart.options.data[0].dataPoints.push({   // data[0]는 Huminity 속성 배열
+                x: row.time,
+                y: row.humidity
+            });
+            chart.options.data[1].dataPoints.push({   // data[1]는 Temperature 속성 배열
+              x: row.time,
+              y: row.temperature
+            });
+            chart.render();  // 데이터 포인터 값을 챠트에 넣은 후 차트 출력
+        });
+
+        function printTime() {//현재시간을 넣어줄 함수
+            var clock = document.getElementById("clock");        // 출력할 장소 선택
+            var now = new Date();                                // 현재시간을 가져오는 함수
+            var nowTime = now.getFullYear() + "년 " + (now.getMonth()+1) + "월 " + now.getDate()
+            + "일 " + now.getHours() + "시 " + now.getMinutes() + "분 " + now.getSeconds() + "초 ";
+            //년 월 일 시 분 초 가져오기
+            clock.innerHTML = nowTime;           //가져온 년 월 일 시 분 초 를 clock함수에 넣어주기
+            setTimeout("printTime()",1000);         // setTimeout(“실행할함수”,시간) 시간은1초의 경우 1000
+       }window.onload = function() {                         // 페이지가 로딩되면 실행
+            printTime();
+       }
+    </script>
+
+</body>
+</html>
