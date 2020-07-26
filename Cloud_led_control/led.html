@@ -1,0 +1,83 @@
+<html>
+<head>
+  <style>
+  button{
+    border: none;
+    color: white;
+    padding: 15px 30px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 30px;
+    margin: 4px 2px;
+  }
+  .on-button {
+    background-color: red;
+
+  }
+  .off-button {
+    background-color: green;
+
+  }
+</style>
+</head>
+  <body>
+      <p>LED Control 201934870 1반 유선희 </p>
+      <!--led 상태가 출력될 곳-->
+      <h1 id="OUT_TEXT"></h1>
+      <!--버튼 클릭 시 이벤트 연결-->
+      <button class = "on-button" id= "onBtn" onclick="onFunction()">LED ON</button>
+      <button class = "off-button" id="offBtn" onclick="offFunction()">LED OFF</button>
+
+      <!--Firebase SDK-->
+      <script src="https://www.gstatic.com/firebasejs/7.15.5/firebase-app.js"></script>
+      <script src="https://www.gstatic.com/firebasejs/7.15.5/firebase-analytics.js"></script>
+      <script src="https://www.gstatic.com/firebasejs/7.15.5/firebase-database.js"></script>
+
+     <script>
+       // Firebase configuration(구성) 추가
+       var firebaseConfig = {
+         apiKey: "AIzaSyAP5Q9Jqbo3a3SMcaKjsVbwXOauIrPvXlk",
+         authDomain: "hello-firebase-17515.firebaseapp.com",
+         databaseURL: "https://hello-firebase-17515.firebaseio.com",
+         projectId: "hello-firebase-17515",
+         storageBucket: "hello-firebase-17515.appspot.com",
+         messagingSenderId: "4802634887",
+         appId: "1:4802634887:web:ce689fdc076b39a0bc0422",
+         measurementId: "G-LN1KM172BR"
+       };
+       // Initialize(초기화) Firebase
+       firebase.initializeApp(firebaseConfig);
+       firebase.analytics();
+     </script>
+
+      <script>
+        // DB에서 텍스트 값 얻어오기
+        var led_on = document.getElementById('ON_BUTTON');
+        var led_off = document.getElementById('OFF_BUTTON');
+
+        // firebase의 LED_STATUS값 가져오기
+        var dbRef = firebase.database().ref().child('LED_STATUS');
+
+        // ON 버턴 클릭하여 DB 값 변경
+        function onFunction() {
+            dbRef.set('ON')
+        }
+          // OFF 버튼 클릭하여 DB 값 변경
+        function offFunction() {
+            dbRef.set('OFF')
+        }
+        // 현재 상태의 DB 값 읽어오기
+        dbRef.on("value", function(snapshot) {
+
+          if (snapshot.val() == 'ON') {//DB 값이 'ON'이면 h1의 텍스트 값을 'LED is ON'로 변경
+            OUT_TEXT.innerText = 'LED is ON';
+          } else if (snapshot.val() == 'OFF'){//DB 값이 'OFF'이면 h1의 텍스트 값을 'LED is OFF'로 변경
+            OUT_TEXT.innerText = 'LED is OFF';
+          }
+        }, function (error) {//에러코드
+          console.log("Error: " + error.code);
+        });
+      </script>
+    </body>
+</html>
